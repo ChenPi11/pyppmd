@@ -113,18 +113,18 @@ python_files = "test*.py"
 norecursedirs = [".git", "_build", "tmp", ".eggs"]
 
 [tool.cibuildwheel]
-manylinux-x86_64-image = "manylinux2014"
-manylinux-i686-image = "manylinux2014"
-manylinux-aarch64-image = "manylinux2014"
-manylinux-ppc64le-image = "manylinux2014"
-manylinux-s390x-image = "manylinux2014"
-manylinux-pypy_x86_64-image = "manylinux2014"
-manylinux-pypy_aarch64-image = "manylinux2014"
+manylinux-x86_64-image = "manylinux_2_28"
+manylinux-i686-image = "manylinux_2_28"
+manylinux-aarch64-image = "manylinux_2_28"
+manylinux-ppc64le-image = "manylinux_2_28"
+manylinux-s390x-image = "manylinux_2_28"
+manylinux-pypy_x86_64-image = "manylinux_2_28"
+manylinux-pypy_aarch64-image = "manylinux_2_28"
 
-musllinux-x86_64-image = "musllinux_1_1"
-musllinux-aarch64-image = "musllinux_1_1"
-musllinux-ppc64le-image = "musllinux_1_1"
-musllinux-s390x-image = "musllinux_1_1"
+musllinux-x86_64-image = "musllinux_1_2"
+musllinux-aarch64-image = "musllinux_1_2"
+musllinux-ppc64le-image = "musllinux_1_2"
+musllinux-s390x-image = "musllinux_1_2"
 
 [tool.cibuildwheel.linux]
 archs = ["auto64", "aarch64"]
@@ -133,32 +133,37 @@ archs = ["auto64", "aarch64"]
 archs = ["x86_64", "universal2", "arm64"]
 
 [tool.tox]
-legacy_tox_ini = """
-[tox]
-envlist = check, py{310,311,312,313,314}, pypy310, docs
+requires = ["tox>=4.19"]
+envlist = [
+    "check",
+    "pypy-3.10",
+    "3.10",
+    "3.11",
+    "3.12",
+    "3.13",
+    "3.14",
+    "docs",
+]
+isolated_build = true
 
-[testenv]
-passenv =
-    PYTEST_ADDOPTS
-    SETUPTOOLS_USE_DISTUTILS
-extras = test
-commands =
-    python -m pytest -vv -s
+[tool.tox.env_run_base]
+description = "Run test under {base_python}"
+passenv = [
+    "GITHUB_*",
+    "PYTEST_ADDOPTS",
+    "SETUPTOOLS_USE_DISTUTILS"
+]
+extras = ["test"]
+commands = [["python", "-m", "pytest", "-vv", "-s"]]
 
-[testenv:pypy310]
-basepython = pypy3.10
+[tool.tox.env.check]
+extras = ["check"]
+ignore_errors = true
+commands = [["check-manifest", "{toxinidir}"], ["flake8", "src", "tests"]]
 
-[testenv:check]
-basepython = python3.12
-extras = check
-ignore_errors=true
-commands =
-    check-manifest {toxinidir}
-    flake8 src tests setup.py
-
-[testenv:docs]
-basepython = python3.12
-extras = docs
-commands =
-    sphinx-build {posargs:-E} -b html docs build/html
-"""
+[tool.tox.env.docs]
+extras = ["docs"]
+commands = [
+    ["sphinx-build", "{posargs:-E}", "-b", "html", "docs", "build/docs"],
+    ["sphinx-build", "-b", "linkcheck", "docs", "build/docs"]
+]
